@@ -1,0 +1,415 @@
+.data
+raiz_msg1:    .asciz "R(1) = "
+raiz_msg2:    .asciz "R(2) = "
+
+plus:         .asciz " + "
+minus:        .asciz " - "
+i_suffix:     .asciz " i\n"
+newline:      .asciz "\n"
+error_msg:    .asciz "Erro! Não é equação do segundo grau!\n"
+
+test1_a: .float 1.0
+test1_b: .float 0.0
+test1_c: .float -9.86960440
+
+test2_a: .float 1.0
+test2_b: .float 0.0
+test2_c: .float 0.0
+
+test3_a: .float 1.0
+test3_b: .float 99.0
+test3_c: .float 2459.0
+
+test4_a: .float 1.0
+test4_b: .float -2468.0
+test4_c: .float 33762440
+
+test5_a: .float 0.0
+test5_b: .float 10.0
+test5_c: .float 100.0
+# Contador de instruções float
+float_counter: .word 0
+counter_msg:   .asciz "Total de instruções float de cálculo (Bhaskara): "
+
+.text
+Main:
+
+    mv      a1, sp
+    
+    # Inicializa o contador
+    sw      zero, float_counter, t0
+    
+    la		t0,test1_a
+    flw		fa0,(t0)
+    
+    la		t0,test1_b
+    flw		fa1,(t0)
+    
+    la		t0,test1_c
+    flw		fa2,(t0)
+
+    jal     baskara
+    mv      a1, sp
+    jal     show
+    
+    # Imprime o contador
+    la      a0, counter_msg
+    li      a7, 4
+    ecall
+    lw      a0, float_counter
+    li      a7, 1
+    ecall
+    la      a0, newline
+    li      a7, 4
+    ecall
+    
+    sw      zero, float_counter, t0
+    
+    
+    la		t0,test2_a
+    flw		fa0,(t0)
+    
+    la		t0,test2_b
+    flw		fa1,(t0)
+    
+    la		t0,test2_c
+    flw		fa2,(t0)
+
+    jal     baskara
+    mv      a1, sp
+    jal     show
+    
+    # Imprime o contador
+    la      a0, counter_msg
+    li      a7, 4
+    ecall
+    lw      a0, float_counter
+    li      a7, 1
+    ecall
+    la      a0, newline
+    li      a7, 4
+    ecall
+    
+    sw      zero, float_counter, t0
+    
+    la		t0,test3_a
+    flw		fa0,(t0)
+    
+    la		t0,test3_b
+    flw		fa1,(t0)
+    
+    la		t0,test3_c
+    flw		fa2,(t0)
+
+    jal     baskara
+    mv      a1, sp
+    jal     show
+    
+    # Imprime o contador
+    la      a0, counter_msg
+    li      a7, 4
+    ecall
+    lw      a0, float_counter
+    li      a7, 1
+    ecall
+    la      a0, newline
+    li      a7, 4
+    ecall
+    
+    sw      zero, float_counter, t0
+    
+    la		t0,test4_a
+    flw		fa0,(t0)
+    
+    la		t0,test4_b
+    flw		fa1,(t0)
+    
+    la		t0,test4_c
+    flw		fa2,(t0)
+
+    jal     baskara
+    mv      a1, sp
+    jal     show
+    
+    # Imprime o contador
+    la      a0, counter_msg
+    li      a7, 4
+    ecall
+    lw      a0, float_counter
+    li      a7, 1
+    ecall
+    la      a0, newline
+    li      a7, 4
+    ecall
+        sw      zero, float_counter, t0
+    
+    la		t0,test5_a
+    flw		fa0,(t0)
+    
+    la		t0,test5_b
+    flw		fa1,(t0)
+    
+    la		t0,test5_c
+    flw		fa2,(t0)
+
+    jal     baskara
+    mv      a1, sp
+    jal     show
+    
+    # Imprime o contador
+    la      a0, counter_msg
+    li      a7, 4
+    ecall
+    lw      a0, float_counter
+    li      a7, 1
+    ecall
+    la      a0, newline
+    li      a7, 4
+    ecall
+    
+    addi    sp, sp, 8
+    li      a7, 10
+    ecall
+
+increment_counter:
+    lw      t6, float_counter
+    addi    t6, t6, 1
+    sw      t6, float_counter, t5
+    ret
+
+baskara:
+    addi    sp, sp, -16
+    sw      ra, 12(sp)
+
+    # prepara constante 0.0 em ft0
+    li      t2, 0
+    fcvt.s.w ft0, t2       # ft0 = 0.0
+    jal     increment_counter
+
+    # verifica a == 0.0
+    feq.s   t0, fa0, ft0   
+    jal     increment_counter
+    bnez    t0, error
+
+    # discriminante h = b^2 - 4ac
+    fmul.s  ft1, fa1, fa1  # b²
+    jal     increment_counter
+    li      t1, 4
+    fcvt.s.w ft2, t1       # 4.0
+    jal     increment_counter
+    fmul.s  ft2, ft2, fa0  # 4a
+    jal     increment_counter
+    fmul.s  ft2, ft2, fa2  # 4ac
+    jal     increment_counter
+    fsub.s  ft3, ft1, ft2  # h = b² - 4ac
+    jal     increment_counter
+
+    # decide casos usando ft0 como 0.0
+    flt.s   t0, ft3, ft0   # h < 0 ?
+    jal     increment_counter
+    bnez    t0, complex_roots
+    feq.s   t0, ft3, ft0   # h == 0 ?
+    jal     increment_counter
+    bnez    t0, single_root
+    j       real_roots
+
+real_roots:
+    fsqrt.s ft4, ft3       # sqrt(h)
+    jal     increment_counter
+    fneg.s  ft5, fa1       # -b
+    jal     increment_counter
+    fadd.s  ft6, ft5, ft4  # -b + sqrt(h)
+    jal     increment_counter
+    fsub.s  ft7, ft5, ft4  # -b - sqrt(h)
+    jal     increment_counter
+
+    li      t1, 2
+    fcvt.s.w ft2, t1       # 2.0
+    jal     increment_counter
+    fmul.s  ft2, ft2, fa0  # 2a
+    jal     increment_counter
+    fdiv.s  ft6, ft6, ft2  # (-b + sqrt(h))/(2a)
+    jal     increment_counter
+    fdiv.s  ft7, ft7, ft2  # (-b - sqrt(h))/(2a)
+    jal     increment_counter
+
+    fsw     ft6, 0(a1)     # Não conta (store)
+    fsw     ft7, 4(a1)     # Não conta (store)
+    li      a0, 1
+    j       end_baskara
+
+single_root:
+    fneg.s  ft5, fa1       # -b
+    jal     increment_counter
+    li      t1, 2
+    fcvt.s.w ft2, t1       # 2.0
+    jal     increment_counter
+    fmul.s  ft2, ft2, fa0  # 2a
+    jal     increment_counter
+    fdiv.s  ft5, ft5, ft2  # -b/(2a)
+    jal     increment_counter
+    
+    fsw     ft5, 0(a1)     # Não conta (store)
+    fsw     ft5, 4(a1)     # Não conta (store)
+    li      a0, 1
+    j       end_baskara
+
+complex_roots:
+    fneg.s  ft4, fa1       # -b
+    jal     increment_counter
+    li      t1, 2
+    fcvt.s.w ft2, t1       # 2.0
+    jal     increment_counter
+    fmul.s  ft2, ft2, fa0  # 2a
+    jal     increment_counter
+    fdiv.s  ft5, ft4, ft2  # -b/(2a)
+    jal     increment_counter
+
+    fneg.s  ft6, ft3       # -h
+    jal     increment_counter
+    fsqrt.s ft6, ft6       # sqrt(-h)
+    jal     increment_counter
+    fdiv.s  ft6, ft6, ft2  # sqrt(-h)/(2a)
+    jal     increment_counter
+
+    fsw     ft5, 0(a1)     # Não conta (store)
+    fsw     ft6, 4(a1)     # Não conta (store)
+    fsw     ft5, 8(a1)     # Não conta (store)
+    fneg.s  ft7, ft6       # -sqrt(-h)/(2a)
+    jal     increment_counter
+    fsw     ft7,12(a1)     # Não conta (store)
+    li      a0, 2
+    j       end_baskara
+
+error:
+    li      a0, 0
+
+end_baskara:
+    lw      ra, 12(sp)
+    addi    sp, sp, 16
+    ret
+
+# Funções abaixo não incrementam o contador
+
+show:
+    addi    sp, sp, -16
+    sw      ra, 12(sp)
+    sw      s0, 8(sp)
+    mv      s0, a0
+
+    beqz    s0, error_out
+    li      t0, 1
+    beq     s0, t0, show_real
+    li      t0, 2
+    beq     s0, t0, show_complex
+    j       end_show
+
+show_real:
+    flw     fa0, 0(a1)
+    flw     fa1, 4(a1)
+    la      a0, raiz_msg1
+    li      a7, 4
+    ecall
+    fmv.s   fa0, fa0
+    li      a7, 2
+    ecall
+    la      a0, newline
+    li a7,4
+    ecall
+    la      a0, raiz_msg2
+    li a7,4
+    ecall
+    fmv.s   fa0, fa1
+    li a7,2
+    ecall
+    la      a0, newline
+    li a7,4
+    ecall
+    j       end_show
+
+show_complex:
+    # Carrega os valores dos n�meros complexos do endere�o em a1
+    flw     fa0, 0(a1)     # parte real de x1
+    flw     fa1, 4(a1)     # parte imagin�ria de x1
+    flw     fa2, 8(a1)     # parte real de x2
+    flw     fa3,12(a1)     # parte imagin�ria de x2
+	
+    # Exibe: x1 = (parte real) + (parte imagin�ria)i
+    la      a0, raiz_msg1
+    li      a7, 4
+    ecall
+
+    fmv.s   fa0, fa0       # parte real de x1
+    li      a7, 2
+    ecall
+
+    la      a0, plus       # s�mbolo +
+    li      a7, 4
+    ecall
+
+    fabs.s  fa1, fa1       # m�dulo da parte imagin�ria
+    fmv.s   fa0, fa1
+    li      a7, 2
+    ecall
+
+    la      a0, i_suffix   # sufixo 'i'
+    li      a7, 4
+    ecall
+
+    # Exibe: x2 = (parte real) - (parte imagin�ria)i
+    la      a0, raiz_msg2
+    li      a7, 4
+    ecall
+
+    fmv.s   fa0, fa2       # parte real de x2
+    li      a7, 2
+    ecall
+
+    la      a0, minus      # s�mbolo -
+    li      a7, 4
+    ecall
+
+    fabs.s  fa3, fa3       # m�dulo da parte imagin�ria
+    fmv.s   fa0, fa3
+    li      a7, 2
+    ecall
+
+    la      a0, i_suffix   # sufixo 'i'
+    li      a7, 4
+    ecall
+
+    j       end_show       # pular para finaliza��o
+
+error_out:
+    la      a0, error_msg
+    li a7,4
+    ecall
+
+end_show:
+    lw      ra, 12(sp)
+    lw      s0, 8(sp)
+    addi    sp, sp, 16
+    ret
+    
+normalize_zero:
+    addi    sp, sp, -8      # Aloca espaço no stack para ra
+    sw      ra, 4(sp)       # Salva ra
+    
+    li      t1, 0
+    fcvt.s.w ft1, t1        # Não conta (pois é normalização)
+    jal     increment_counter
+    feq.s   t0, ft0, ft1    # Não conta (comparação de normalização)
+    jal     increment_counter
+    bnez    t0, set_clean_zero
+    
+    lw      ra, 4(sp)       # Restaura ra
+    addi    sp, sp, 8       # Libera espaço do stack
+    ret
+
+set_clean_zero:
+    fmv.s   ft0, ft1        # Não conta (cópia)
+    jal     increment_counter
+    
+    lw      ra, 4(sp)       # Restaura ra (mesmo stack frame de normalize_zero)
+    addi    sp, sp, 8       # Libera espaço do stack
+    ret
