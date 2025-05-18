@@ -8,22 +8,6 @@ i_suffix:     .asciz " i\n"
 newline:      .asciz "\n"
 error_msg:    .asciz "Erro! Não é equação do segundo grau!\n"
 
-test1_a: .float 1.0
-test1_b: .float 0.0
-test1_c: .float -9.86960440
-
-test2_a: .float 1.0
-test2_b: .float 0.0
-test2_c: .float 0.0
-
-test3_a: .float 1.0
-test3_b: .float 2.0
-test3_c: .float 5.0
-
-test4_a: .float 0.0
-test4_b: .float 4.0
-test4_c: .float 2.0
-
 .text
 Main:
 	addi    sp, sp, -8
